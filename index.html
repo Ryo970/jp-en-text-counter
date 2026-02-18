@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="script.js" defer></script>
+    <title>Global Text Counter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        .progress-sm { height: 6px; }
+        .transition-width { transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <i class="fas fa-language text-indigo-500"></i>
+                <span id="ui-title">Text Counter</span>
+            </h1>
+            <div class="flex bg-white shadow-sm rounded-lg p-1 border">
+                <button onclick="setLanguage('ja')" id="lang-ja" class="px-3 py-1 text-xs font-bold rounded">JP</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 text-xs font-bold rounded">EN</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <div class="lg:col-span-1 space-y-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 id="ui-stats-title" class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistics</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-baseline">
+                            <span id="ui-char-all" class="text-sm text-slate-500">Characters</span>
+                            <span id="char-all" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-baseline border-t pt-2">
+                            <span id="ui-word-count" class="text-sm text-slate-500">Words</span>
+                            <span id="word-count" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-baseline border-t pt-2">
+                            <span id="ui-line-count" class="text-sm text-slate-500">Lines</span>
+                            <span id="line-count" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 id="ui-limit-title" class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">SNS Limits</h2>
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1 font-bold">
+                                <span>X (Twitter)</span>
+                                <span id="x-label">0/280</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full progress-sm overflow-hidden">
+                                <div id="x-bar" class="bg-slate-800 h-full transition-width" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1 font-bold">
+                                <span>Instagram</span>
+                                <span id="insta-label">0/2200</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full progress-sm overflow-hidden">
+                                <div id="insta-bar" class="bg-gradient-to-r from-orange-400 via-red-500 to-purple-600 h-full transition-width" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 space-y-4">
+                <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                        <span id="ui-editor-label" class="text-xs font-bold text-slate-400 uppercase">Editor</span>
+                        <div class="flex gap-2">
+                            <button onclick="copyText()" class="p-2 text-slate-600 hover:text-indigo-600 transition" title="Copy">
+                                <i class="far fa-copy"></i>
+                            </button>
+                            <button onclick="clearText()" class="p-2 text-slate-400 hover:text-red-500 transition" title="Clear">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="editor" 
+                        class="w-full h-[65vh] p-6 text-lg text-slate-700 outline-none resize-none leading-relaxed"
+                        placeholder="Type or paste text here..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const i18n = {
+            ja: {
+                title: "テキストカウンター",
+                statsTitle: "統計",
+                limitTitle: "SNS制限",
+                charAll: "文字数",
+                wordCount: "単語数",
+                lineCount: "行数",
+                editorLabel: "エディター",
+                placeholder: "ここにテキストを入力または貼り付けてください...",
+                confirmClear: "テキストをすべて消去しますか？",
+                copyDone: "コピー完了"
+            },
+            en: {
+                title: "Text Counter Pro",
+                statsTitle: "Statistics",
+                limitTitle: "SNS Limits",
+                charAll: "Characters",
+                wordCount: "Words",
+                lineCount: "Lines",
+                editorLabel: "Editor",
+                placeholder: "Type or paste text here...",
+                confirmClear: "Are you sure you want to clear all text?",
+                copyDone: "Copied!"
+            }
+        };
+
+        let currentLang = 'ja';
+        const editor = document.getElementById('editor');
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            
+            // UI更新
+            document.getElementById('ui-title').textContent = i18n[lang].title;
+            document.getElementById('ui-stats-title').textContent = i18n[lang].statsTitle;
+            document.getElementById('ui-limit-title').textContent = i18n[lang].limitTitle;
+            document.getElementById('ui-char-all').textContent = i18n[lang].charAll;
+            document.getElementById('ui-word-count').textContent = i18n[lang].wordCount;
+            document.getElementById('ui-line-count').textContent = i18n[lang].lineCount;
+            document.getElementById('ui-editor-label').textContent = i18n[lang].editorLabel;
+            editor.placeholder = i18n[lang].placeholder;
+
+            // ボタンのスタイル更新
+            document.getElementById('lang-ja').className = lang === 'ja' ? 'px-3 py-1 text-xs font-bold rounded bg-slate-800 text-white' : 'px-3 py-1 text-xs font-bold rounded text-slate-400 hover:text-slate-600';
+            document.getElementById('lang-en').className = lang === 'en' ? 'px-3 py-1 text-xs font-bold rounded bg-slate-800 text-white' : 'px-3 py-1 text-xs font-bold rounded text-slate-400 hover:text-slate-600';
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            const val = editor.value;
+            const charCount = val.length;
+            const wordCount = val.trim() === "" ? 0 : val.trim().split(/\s+/).length;
+            const lineCount = val === "" ? 0 : val.split(/\n/).length;
+
+            document.getElementById('char-all').textContent = charCount.toLocaleString();
+            document.getElementById('word-count').textContent = wordCount.toLocaleString();
+            document.getElementById('line-count').textContent = lineCount.toLocaleString();
+
+            // SNS Limits (Xは日本語/英語でルールが異なりますが、今回は一般的な最大値で設定)
+            updateProgress('x', charCount, 280); 
+            updateProgress('insta', charCount, 2200);
+
+            localStorage.setItem('autosave_global_text', val);
+        }
+
+        function updateProgress(id, current, max) {
+            const percent = Math.min((current / max) * 100, 100);
+            const bar = document.getElementById(`${id}-bar`);
+            const label = document.getElementById(`${id}-label`);
+            bar.style.width = percent + '%';
+            label.textContent = `${current}/${max}`;
+            bar.className = current > max ? 'bg-red-500 h-full transition-width' : (id === 'x' ? 'bg-slate-800 h-full transition-width' : 'bg-gradient-to-r from-orange-400 via-red-500 to-purple-600 h-full transition-width');
+        }
+
+        function copyText() {
+            navigator.clipboard.writeText(editor.value);
+            alert(i18n[currentLang].copyDone);
+        }
+
+        function clearText() {
+            if(confirm(i18n[currentLang].confirmClear)) {
+                editor.value = '';
+                updateStats();
+            }
+        }
+
+        // 初期化
+        const userLang = navigator.language.startsWith('ja') ? 'ja' : 'en';
+        setLanguage(localStorage.getItem('user_lang') || userLang);
+        
+        const savedText = localStorage.getItem('autosave_global_text');
+        if (savedText) {
+            editor.value = savedText;
+            updateStats();
+        }
+
+        editor.addEventListener('input', updateStats);
+        window.addEventListener('beforeunload', () => localStorage.setItem('user_lang', currentLang));
+    </script>
+</body>
+</html>
